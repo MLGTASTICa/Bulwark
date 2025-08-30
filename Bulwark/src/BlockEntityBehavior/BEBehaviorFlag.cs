@@ -21,6 +21,8 @@ namespace Bulwark {
             public Stronghold Stronghold { get; protected set; } = new Stronghold();
             public ItemStack Banner      { get; protected set; }
             public float CapturedPercent { get; protected set; }
+            
+            public float TimeStored { get; protected set; }
 
             protected float TargetPercent => this.captureDirection switch {
                 EnumCaptureDirection.Claim   => 1f,
@@ -149,15 +151,17 @@ namespace Bulwark {
                         if (this.Stronghold.PlayerName is not null)
                             if (this.Stronghold.GroupName is not null) {
                                 dsc.AppendLine(Lang.Get(
-                                    "Under {0}'s command in the name of {1} for {2:0.#} days",
+                                    "Under {0}'s command in the name of {1} for {2:0.#} days, satiety {3} ",
                                     this.Stronghold.PlayerName,
                                     this.Stronghold.GroupName,
-                                    remaining
+                                    remaining,
+                                    TimeStored
                                 )); // ..
                             } else dsc.AppendLine(Lang.Get(
-                                    "Under {0}'s command for {1:0.#} days",
+                                    "Under {0}'s command for {1:0.#} days, satiety {2}",
                                     this.Stronghold.PlayerName,
-                                    remaining
+                                    remaining,
+                                    TimeStored
                                 )); // ..
                     } // if ..
                 } // if ..
@@ -182,7 +186,7 @@ namespace Bulwark {
                                     if (itemStack.Collectible?.NutritionProps is FoodNutritionProperties foodNutrition)
                                         this.cellarExpectancy += foodNutrition.Satiety
                                             * itemStack.StackSize
-                                            * (BulwarkModSystem.ClaimDurationPerSatiety * (1f + this.BlockBehavior.ExpectancyBonus));
+                                            * (BulwarkModSystem.SatietyToSecondsRatio * (1f + this.BlockBehavior.ExpectancyBonus));
 
                 } // if ..
             } // void ..
@@ -191,10 +195,16 @@ namespace Bulwark {
             private void UpdateCellar(float deltaTime) {
                 if (this.Stronghold.IsClaimed) {
 
-                    float nowDurationPerSatiety = BulwarkModSystem.ClaimDurationPerSatiety * (1f + this.BlockBehavior.ExpectancyBonus);
+                    float nowDurationPerSatiety = BulwarkModSystem.SatietyToSecondsRatio * (1f + this.BlockBehavior.ExpectancyBonus);
+                    
+                    float timeUseTarget = deltaTime / 1000 * this.Api.World.Calendar.SpeedOfTime;
 
-                    float satiety       = 0f;
-                    float targetSatiety = deltaTime / 86400f / this.Api.World.Calendar.SpeedOfTime / nowDurationPerSatiety;
+                    if (TimeStored > timeUseTarget)
+                    {
+                        TimeStored -= timeUseTarget;
+                        return;
+                    }
+
 
                     BlockEntityContainer[] cellars = new BlockEntityContainer [4];
                     cellars[0] = this.Api.World.BlockAccessor.GetBlockEntity<BlockEntityContainer>(this.Pos + new BlockPos( 1, 0,  0));
@@ -205,17 +215,13 @@ namespace Bulwark {
                     foreach(BlockEntityContainer cellar in cellars)
                         if (cellar != null)
                             foreach (ItemSlot itemSlot in cellar.Inventory)
-                                if (satiety >= targetSatiety) return;
+                                if (TimeStored >= timeUseTarget) return;
                                 else if (itemSlot.Itemstack is ItemStack itemStack)
-                                    if (itemStack.Collectible?.NutritionProps is FoodNutritionProperties foodNutrition) {
+                                    if (itemStack.Collectible?.NutritionProps is FoodNutritionProperties foodNutrition)
+                                    {
 
-                                        int targetSize = GameMath.Min(
-                                            itemStack.StackSize,
-                                            GameMath.RoundRandom(this.Api.World.Rand, targetSatiety / (foodNutrition.Satiety * nowDurationPerSatiety)
-                                            - satiety / (foodNutrition.Satiety * nowDurationPerSatiety))
-                                        ); // ..
-
-                                        satiety += foodNutrition.Satiety * targetSize * nowDurationPerSatiety;
+                                        int targetSize = GameMath.Min(1, (int)(timeUseTarget / (foodNutrition.Satiety * nowDurationPerSatiety)));
+                                        TimeStored += foodNutrition.Satiety * targetSize * nowDurationPerSatiety;
                                         itemSlot.TakeOut(targetSize);
                                         itemSlot.MarkDirty();
 
@@ -344,6 +350,7 @@ namespace Bulwark {
 
                     if (tree.GetString("areaName") is string name) this.Stronghold.Name = name;
 
+                    this.TimeStored = tree.GetFloat("timeStored");
                     this.Stronghold.SiegeIntensity = tree.GetFloat("siegeIntensity");
 
                     base.FromTreeAttributes(tree, worldForResolving);
@@ -366,6 +373,7 @@ namespace Bulwark {
                     tree.SetFloat("cellarExpectancy", this.cellarExpectancy);
                     tree.SetFloat("capturedPercent",  this.CapturedPercent);
                     tree.SetInt("captureDirection", (int)this.captureDirection);
+                    tree.SetFloat("timeStored", this.TimeStored);
 
                     base.ToTreeAttributes(tree);
 

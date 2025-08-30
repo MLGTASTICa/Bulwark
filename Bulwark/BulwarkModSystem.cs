@@ -6,8 +6,9 @@ using Vintagestory.GameContent;
 namespace Bulwark {
     public class BulwarkModSystem : ModSystem {
 
-        public static float ClaimDurationPerSatiety     { get; private set; }
+        public static float SatietyToSecondsRatio     { get; private set; }
         public static int   UndergroundClaimLimit       { get; private set; }
+        
         public static bool  AllStoneBlockRequirePickaxe { get; private set; }
 
         public override bool ShouldLoad(EnumAppSide forSide) => true;
@@ -21,7 +22,7 @@ namespace Bulwark {
             api.RegisterBlockEntityBehaviorClass("LogisticEntity", typeof(BlockEntityBehaviorLogistic));
 
             JsonObject modConfig = api.LoadModConfig("BulwarkModConfig.json");
-            BulwarkModSystem.ClaimDurationPerSatiety     = modConfig?["claimDurationPerSatiety"]?.AsFloat(0.0025f) ?? 0.0025f;
+            BulwarkModSystem.SatietyToSecondsRatio     = modConfig?["SatietyToSecondsRatio"]?.AsFloat(100f) ?? 100f;
             BulwarkModSystem.UndergroundClaimLimit       = modConfig?["undergroundClaimLimit"]?.AsInt(8)           ?? 8;
             BulwarkModSystem.AllStoneBlockRequirePickaxe = modConfig?["allStoneBlockRequirePickaxe"]?.AsBool(true) ?? true;
 
