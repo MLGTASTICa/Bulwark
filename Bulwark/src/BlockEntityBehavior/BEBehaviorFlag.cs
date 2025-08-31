@@ -29,7 +29,7 @@ namespace Bulwark {
                 EnumCaptureDirection.Unclaim => 0f,
                 _ => this.Stronghold.IsClaimed
                     ? this.Api.World.BlockAccessor.GetLightLevel(this.Pos, EnumLightLevelType.OnlySunLight) >= 16
-                        ? this.NowClaimedUntilDay - this.Api.World.Calendar.TotalDays > 0.1
+                        ? TimeStored != 0f
                             ? 1f
                             : 0f
                         : 0f
@@ -40,8 +40,8 @@ namespace Bulwark {
 
             protected float   cellarExpectancy;
             protected double? NowClaimedUntilDay => this.Api.World.Calendar.TotalDays
-                + this.cellarExpectancy
-                + this.LogisticPoints.Sum(logisticPoint => logisticPoint.CellarExpectancy)
+                + this.cellarExpectancy / 86400f
+                + this.LogisticPoints.Sum(logisticPoint => logisticPoint.CellarExpectancy / 86400f)
                 - (double)MathF.Pow(this.Stronghold.SiegeIntensity * 0.25f, 2);
 
 
@@ -151,14 +151,14 @@ namespace Bulwark {
                         if (this.Stronghold.PlayerName is not null)
                             if (this.Stronghold.GroupName is not null) {
                                 dsc.AppendLine(Lang.Get(
-                                    "Under {0}'s command in the name of {1} for {2:0.#} days, satiety {3} ",
+                                    "Under {0}'s command in the name of {1} for {2:0.#} days, storedTime {3} ",
                                     this.Stronghold.PlayerName,
                                     this.Stronghold.GroupName,
                                     remaining,
                                     TimeStored
                                 )); // ..
                             } else dsc.AppendLine(Lang.Get(
-                                    "Under {0}'s command for {1:0.#} days, satiety {2}",
+                                    "Under {0}'s command for {1:0.#} days, storedTime {2}",
                                     this.Stronghold.PlayerName,
                                     remaining,
                                     TimeStored
@@ -184,9 +184,12 @@ namespace Bulwark {
                             foreach (ItemSlot itemSlot in cellar.Inventory)
                                 if (itemSlot.Itemstack is ItemStack itemStack)
                                     if (itemStack.Collectible?.NutritionProps is FoodNutritionProperties foodNutrition)
-                                        this.cellarExpectancy += foodNutrition.Satiety
-                                            * itemStack.StackSize
-                                            * (BulwarkModSystem.SatietyToSecondsRatio * (1f + this.BlockBehavior.ExpectancyBonus));
+                                        this.cellarExpectancy += foodNutrition.Satiety * (float)itemStack.StackSize;
+
+                    this.cellarExpectancy *= BulwarkModSystem.SatietyToSecondsRatio * (1f + this.BlockBehavior.ExpectancyBonus);
+                    if (cellarExpectancy != 0f)
+                        cellarExpectancy /= Api.World.Calendar.SpeedOfTime;
+                    Api.Logger.Debug($"cellar expectancy: {cellarExpectancy}");
 
                 } // if ..
             } // void ..
@@ -205,6 +208,8 @@ namespace Bulwark {
                         return;
                     }
 
+                    TimeStored = 0;
+
 
                     BlockEntityContainer[] cellars = new BlockEntityContainer [4];
                     cellars[0] = this.Api.World.BlockAccessor.GetBlockEntity<BlockEntityContainer>(this.Pos + new BlockPos( 1, 0,  0));
@@ -215,7 +220,7 @@ namespace Bulwark {
                     foreach(BlockEntityContainer cellar in cellars)
                         if (cellar != null)
                             foreach (ItemSlot itemSlot in cellar.Inventory)
-                                if (TimeStored >= timeUseTarget) return;
+                                if (TimeStored > timeUseTarget) return;
                                 else if (itemSlot.Itemstack is ItemStack itemStack)
                                     if (itemStack.Collectible?.NutritionProps is FoodNutritionProperties foodNutrition)
                                     {
