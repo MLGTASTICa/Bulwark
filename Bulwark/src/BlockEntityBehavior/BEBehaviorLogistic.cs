@@ -176,7 +176,7 @@ namespace Bulwark {
                                     if (itemStack.Collectible?.NutritionProps is FoodNutritionProperties foodNutrition)
                                         this.CellarExpectancy += foodNutrition.Satiety
                                             * itemStack.StackSize
-                                            * (BulwarkModSystem.SatietyToSecondsRatio * (1f + this.blockBehavior.ExpectancyBonus + this.flag.BlockBehavior.ExpectancyBonus));
+                                            * (BulwarkModSystem.SatietyToSecondsRatio * (1f + this.blockBehavior.ExpectancyBonus));
 
                 } // if ..
             } // void ..
@@ -185,7 +185,7 @@ namespace Bulwark {
             private void UpdateCellar(float deltaTime) {
                 if (this.stronghold?.IsClaimed ?? false && this.Banner?.Collectible == this.flag?.Banner?.Collectible) {
 
-                    float nowDurationPerSatiety = BulwarkModSystem.SatietyToSecondsRatio * (1f + this.blockBehavior.ExpectancyBonus + this.flag.BlockBehavior.ExpectancyBonus);
+                    float nowDurationPerSatiety = BulwarkModSystem.SatietyToSecondsRatio * (1f + this.blockBehavior.ExpectancyBonus);
 
                     float satiety       = 0f;
                     float targetSatiety = deltaTime / 86400f / this.Api.World.Calendar.SpeedOfTime / nowDurationPerSatiety;

@@ -197,7 +197,7 @@ namespace Bulwark {
 
                     float nowDurationPerSatiety = BulwarkModSystem.SatietyToSecondsRatio * (1f + this.BlockBehavior.ExpectancyBonus);
                     
-                    float timeUseTarget = deltaTime / 1000 * this.Api.World.Calendar.SpeedOfTime;
+                    float timeUseTarget = deltaTime * this.Api.World.Calendar.SpeedOfTime;
 
                     if (TimeStored > timeUseTarget)
                     {
@@ -220,7 +220,8 @@ namespace Bulwark {
                                     if (itemStack.Collectible?.NutritionProps is FoodNutritionProperties foodNutrition)
                                     {
 
-                                        int targetSize = GameMath.Min(1, (int)(timeUseTarget / (foodNutrition.Satiety * nowDurationPerSatiety)));
+                                        int targetSize = GameMath.Max(1, (int)(timeUseTarget / (foodNutrition.Satiety * nowDurationPerSatiety)));
+                                        Api.Logger.Debug($"targetsize: {targetSize}, delta {deltaTime} , target {timeUseTarget}");
                                         TimeStored += foodNutrition.Satiety * targetSize * nowDurationPerSatiety;
                                         itemSlot.TakeOut(targetSize);
                                         itemSlot.MarkDirty();
