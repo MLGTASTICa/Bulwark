@@ -1,6 +1,6 @@
 Bulwark mod , made originally by Lastelle , now continued by SPCR
 
-Support me over at [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/spcr532994)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/spcr532994)
 
 ORIGINAL MOD DESCRIPTION BELOW
 
