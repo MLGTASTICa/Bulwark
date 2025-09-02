@@ -1,3 +1,8 @@
+A continuation of the Bulwark mod made by SPCR
+Support me over at https://ko-fi.com/spcr532994
+
+ORIGINAL MOD DESCRIPTION BELOW
+
 # Bulwark
 
  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
