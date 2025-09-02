@@ -1,4 +1,4 @@
-A continuation of the Bulwark mod made by SPCR
+Bulwark mod , made originally by Lastelle , now continued by SPCR
 Support me over at https://ko-fi.com/spcr532994
 
 ORIGINAL MOD DESCRIPTION BELOW
